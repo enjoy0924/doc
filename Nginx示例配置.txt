@@ -1,0 +1,102 @@
+user  root;
+worker_processes  24;
+worker_rlimit_nofile 65535;
+
+error_log  /app/nginx/logs/error.log;
+pid        /var/run/nginx.pid;
+
+events {
+    # 性能优化，仅支持2.6以上内核版本
+    use epoll;
+    worker_connections  65535;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    client_max_body_size 200M;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /app/nginx/logs/access.log  main;
+
+    add_header  Access-Control-Allow-Origin "$http_origin";
+    add_header  Access-Control-Allow-Credentials 'true';
+
+
+    sendfile        on;
+    keepalive_timeout  65;
+
+    # too many close_wait
+    tcp_nodelay        on;
+
+
+    # 主页服务器列表
+    upstream home {
+        server 147.192.26.11:80;
+    }
+    # 后端服务器列表
+    upstream backend {
+        server 192.168.0.110:10086;
+    }
+    # 下载服务器列
+    upstream download {
+        server 192.168.0.206:10000;
+    }
+    # 更新服务器列表
+    upstream update {
+        server 192.168.0.112:9099;
+    }
+    # 静态服务器列表
+    upstream static {
+        server 192.168.0.206:90;
+    }
+
+    server {
+        listen       80;
+        server_name  127.0.0.1;
+        
+        location / {   
+             proxy_pass http://home;
+        }       
+
+        location /update/ {
+            rewrite  ^/update/(.*)  /$1  break;
+            proxy_pass http://download;
+        }
+        
+        location /static/ {
+            rewrite  ^/static/(.*)  /$1  break;
+            proxy_pass http://static;
+        }
+    }
+
+    server {
+        server_name www.octopus.com;
+        listen 443;
+        ssl on;
+        ssl_certificate /app/nginx/conf/54354945345345.pem;
+        ssl_certificate_key /app/nginx/conf/54354945345345.key;
+
+        location / {
+            proxy_pass http://backend;
+        }
+    }
+
+    server {
+        listen 9876;
+        server_name  127.0.0.1;
+
+        location /door/ {
+            proxy_pass http://backend;
+        }
+
+        location /update/ {
+            proxy_pass http://update;
+        }
+    }
+
+    include /etc/nginx/conf.d/*.conf;
+}

@@ -1,0 +1,62 @@
+# For advice on how to change settings please see
+# http://dev.mysql.com/doc/refman/5.5/en/server-configuration-defaults.html
+
+[mysqld]
+port       = 31286
+socket     = /app/mysql/mysql.sock
+#pid-file   = /app/mysql/mysql-3306.pid
+datadir    = /app/mysql/data/
+tmpdir     = /app/mysql/data/
+server-id  = 8809241657
+user       = root
+
+log_bin = /app/mysql/synclogs/mysql-bin
+relay-log = /app/mysql/synclogs/relay-mysql
+relay-log-index = /app/mysql/synclogs/relay-mysql.index
+binlog-format = mixed
+sync_binlog=1
+
+expire-logs-days        = 14
+tmp-table-size          = 33554432
+max-heap-table-size     = 16554432
+thread-cache-size       = 100
+
+default-time-zone='+8:00'
+innodb_read_io_threads  = 4
+innodb_write_io_threads = 4
+
+read_buffer_size = 4M
+
+log-slave-updates
+skip_name_resolve
+
+back_log         = 300
+open_files_limit = 4096
+table_open_cache = 128
+binlog_cache_size= 32M
+
+log-error   = /app/mysql/logs/mysql.log
+
+general-log     = false
+general-log-file = /app/mysql/logs/mysql-generate.log
+
+slow-launch-time    = 10
+slow-query-log      = true 
+slow_query_log_file = /app/mysql/logs/mysql-slow.log
+
+max_connections   = 1000
+max_allowed_packet= 4M
+
+innodb_buffer_pool_size = 50G    #8G
+innodb_buffer_pool_instances = 25     #instance number
+
+innodb_lock_wait_timeout=50
+innodb_flush_method=O_DIRECT
+
+innodb_log_file_size = 256M
+innodb_flush_log_at_trx_commit = 2
+
+innodb_data_home_dir=/app/mysql/data/
+innodb_data_file_path=ibdata1:1G;ibdata2:1G;ibdata3:1G;ibdata4:1G;ibdata5:1G;ibdata6:1G;ibdata7:1G:autoextend:max:2G
+
+sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
