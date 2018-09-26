@@ -1,0 +1,69 @@
+﻿
+===================================================================Redis Cluster========================================================
+#!/bin/bash
+/usr/local/redis-3.0.6/src/redis-trib.rb create --replicas 3 192.168.0.110:7000 192.168.0.111:7000 192.168.0.112:7000 192.168.0.110:7001 192.168.0
+.111:7001 192.168.0.112:7001 192.168.0.110:7002 192.168.0.111:7002 192.168.0.112:7002 192.168.0.110:7003 192.168.0.111:7003 192.168.0.112:7003
+
+
+=======================================================================MySQL==========================================================
+mysql -uroot -h127.0.0.1 -pred2443640.Com -P3306
+
+mysql -uroot -p --socket=/app/mysql/mysql-3306.sock
+
+update mysql.user set authentication_string=password('red2443640.Com') where user='root' and host='localhost';
+
+Grant all privileges on *.* to 'root'@'%' identified by 'red2443640.Com' with grant option;
+
+Grant all privileges on *.* to 'master'@'192.168.0.%' identified by 'red2443640.Win' with grant option;
+
+Grant all privileges on *.* to 'tars'@'192.168.0.%' identified by 'tars2015' with grant option;
+
+yum install sysstat
+
+#8版本以下有效
+set password = password('red2443640.Com');
+
+#8以上使用更改密码加密方式以及密码
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'red2443640.Com';
+
+Grant all privileges on *.* to 'root'@'127.0.0.1' identified by 'red2443640.Com' with grant option;
+
+Grant all privileges on *.* to 'root'@'192.168.0.%' identified by 'red2443640.Com' with grant option;
+
+flush privileges;
+
+change master to master_host='192.168.0.108',master_port=3306,master_user='angellove',master_password='red2443640.Com', MASTER_LOG_FILE='mysql-bin.000007',MASTER_LOG_POS=169502489;
+
+change master to master_host='192.168.0.205',master_port=3306,master_user='master',master_password='red2443640.Win', MASTER_LOG_FILE='mysql-bin.000007',MASTER_LOG_POS=169502489;
+
+select host,user from mysql.user;
+
+delete from mysql.user where host='%';
+
+set global show_compatibility_56=on;
+
+set global sql_mode='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';
+
+
+chown -R mysql.mysql ${base_dir} 
+mysqld --defaults-file=/etc/my.cnf --initialize --user=mysql
+
+## mysql条件dump
+mysqldump -uroot -pred2443640 -h127.0.0.1 -P3306 qbu_for_class qbu_student_paper -w "SELECT cid.id, cid.class_num as group_num, cid.is_valid as valid, cid.created_time from class_id cid" --no-create-info --lock-all-tables > cl_group_candidate_id.sql
+
+
+##用来更新本地题库数据到远端
+mysqldump -uroot -pred2443640.Com --ignore-table=question_bank_for_bs.qb_question_solution question_bank_for_bs > question_bank_for_bs.sql
+
+
+mysql -uroot -pred2443640 -h192.168.0.161 -P3306 qbu < dump207.sql
+
+
+====================================================================HBASE SQOOP PHOENIX===================================================================
+create 'QBU_A_K',{NAME=>'AK',VERSIONS=>1,BLOCKCACHE=>true,BLOOMFILTER=>'ROW',COMPRESSION=>'SNAPPY',TTL => '2097483647', BLOCKSIZE => '65536'},{SPLITS => ['1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']}
+
+sudo -u hdfs sqoop import --connect jdbc:mysql://192.168.0.202/qbu_for_class --username root --password red2443640.Com --query "select CONCAT(paper_id,'_',question_id) as id, score, score_points, knowledge_id, question_group_id from qbu_answer_key where knowledge_id is not null and \$CONDITIONS" --where '1=1' --hbase-table QBU_A_K --column-family AK --hbase-row-key id --split-by id -m 1
+
+
+(*)创建phoenix表:
+CREATE TABLE QBU_A_K(ROW VARCHAR not null primary key,"AK"."knowledge_id" VARCHAR,"AK"."score" VARCHAR ,"AK"."score_points" VARCHAR,"AK"."question_group_id" VARCHAR);
